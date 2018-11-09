@@ -1,0 +1,4 @@
+* bootstrap-scripts directory
+
+These scripts support optional package installation and configuration that is not cloud
+platform specific
