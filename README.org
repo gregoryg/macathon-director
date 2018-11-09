@@ -1,0 +1,11 @@
+* macathon-director
+
+Configs for using Cloudera Altus Director
+
+The emphasis on this training is:
+   + Install third party and beta products using Director
+   + Choose modular methods for HA and components
+   + Resuse bootstrap scripts for different environments
+   + Automatically bring up CDSW with wildcard DNS
+
+
