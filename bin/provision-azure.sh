@@ -74,7 +74,8 @@ ssh -tt ${SSH_USERNAME}@azure-director 'bash ./configure-director-instance.sh'
 echo 'Placing director-scripts on instance - use DNS scripts on Azure'
 ssh ${SSH_USERNAME}@azure-director "git clone 'https://github.com/cloudera/director-scripts.git'"
 
-echo 'Now please set DNS - internal domain will be set to cdh-cluster.internal'
+echo 'Now please set DNS - set internal domain to cdh-cluster.internal'
+ssh -tt ${SSH_USERNAME}@azure-director 'sudo hostname `hostname -s`.cdh-cluster.internal'
 ssh -tt ${SSH_USERNAME}@azure-director 'sudo bash ./director-scripts/azure-dns-scripts/bind-dns-setup.sh'
 
 echo Starting proxy
