@@ -39,13 +39,13 @@ Workbench.
 
 ** Install Azure command line client
 
-Documentation: [[https://www.cloudera.com/documentation/altus/topics/alt_client_setup.html][Cloudera Altus Client Setup]]
+Documentation: [[https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest][Install the Azure CLI]]
 
 #+BEGIN_SRC sh
-  pip install altuscli
+  brew update && brew install azure-cli
 #+END_SRC
 
-** Verify Altus CLI is properly configured
+** Configure Altus CLI
 #+BEGIN_SRC sh
-  altus iam get-user
+  az login
 #+END_SRC
