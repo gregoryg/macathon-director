@@ -74,11 +74,12 @@ ssh ${SSH_USERNAME}@azure-director "git clone 'https://github.com/cloudera/direc
 ssh ${SSH_USERNAME}@azure-director "wget 'https://raw.githubusercontent.com/gregoryg/macathon-director/master/bin/configure-director-instance.sh'"
 
 
+ssh -tt ${SSH_USERNAME}@azure-director 'bash ./configure-director-instance.sh'
+
 echo 'Now please set DNS - set internal domain to cdh-cluster.internal'
 ssh -tt ${SSH_USERNAME}@azure-director 'sudo hostname `hostname -s`.cdh-cluster.internal'
 ssh -tt ${SSH_USERNAME}@azure-director 'sudo bash ./director-scripts/azure-dns-scripts/bind-dns-setup.sh'
 
-ssh -tt ${SSH_USERNAME}@azure-director 'bash ./configure-director-instance.sh'
 
 # echo Starting proxy
 # emacsclient -n '/ssh:${SSH_USERNAME}@azure-director:'

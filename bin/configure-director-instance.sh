@@ -9,6 +9,7 @@
 
 # some necessary, some useful but optional
 echo 'Installing tools'
+sudo yum -y install epel-release
 sudo yum -y install wget curl telnet finger mlocate jq htop yum-cron tmux nc netcat nmap-ncat
 
 echo 'installing Java 8 and disabling OpenJDK'
