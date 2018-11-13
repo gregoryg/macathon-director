@@ -3,9 +3,24 @@
 # TODO: reuse NSG: js-directorNSG
 
 OWNER_TAG=${OWNER_TAG:=${USER}}  # example: jsmith
-SSH_USERNAME=${SHELL_USERNAME:=${USER}} # example: gregj/centos/ec2-user
+SSH_USERNAME=${SSH_USERNAME:=${USER}} # example: gregj/centos/ec2-user
 AZ_RESOURCE_GROUP=${AZ_RESOURCE_GROUP:=${USER}-rg} # example: jsmith-rg
 AZ_INSTANCE_NAME=${AZ_INSTANCE_NAME:=abc-director} # example: js-director
+SSH_KEYNAME=${SSH_KEYNAME:=abc-azure.pub}
+
+echo """Using the following values:
+Owner tag: ${OWNER_TAG}
+SSH User: ${SSH_USERNAME}
+Azure resource group: ${AZ_RESOURCE_GROUP} (must exist on your Azure axcount)
+Instance name: ${AZ_INSTANCE_NAME}
+"""
+read -p  "Proceed? [Y/n]: " -n 1 -r
+# echo
+
+if [[ ! $REPLY =~ ^[Yy]$ ]] ; then
+    echo Set the environment variables you require, then run this script again - exiting
+    exit 1
+fi
 
 echo 'Starting provisioning of instance on Azure - please use default DNS for your VNET!'
 az account set --subscription 'Sales Engineering'
@@ -22,7 +37,8 @@ dirinfo=$(az vm create \
     --tags owner=${OWNER_TAG} \
     --image CentOS \
     --admin-username ${SSH_USERNAME} \
-    --ssh-key-value "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDkOQoHHMfrNitnGIu/1wP/e0UBqVNFr850RY2Hfp1ooPHXxkLX7v1kA9H0hr0WE3zdubmvej+AXv2uw0uIc4tFL6lSTM5XE1Dmb80cHcApOBeuJI4L06BJQCxdlLKDqKRi9D5TTsEuv1tC7+dr+fqbNu7K3wwuOz51tK6pAxKbMCYt9lerIG0Wo+70C8BvA9pLD7YhqfwCHhQVX3MHVrSYhyevToXMTzMhKF5bjQ4Y8C67FaYdbYDOq8IECYMNpW8jbDC3AuQP5HtbhE7dsFwWXV8ZanQjXN1CDyz+D5pJFWUi4S0I0emZkwZGwfshdl/MP4CiZeWnrdEHOzCndnYN jsmith@jsmith-MBP.local")
+    --ssh-key-value @~/.ssh/${SSH_KEYNAME})
+
 if [ "$?" != 0 ] ; then
     echo "Error encountered:"
     echo ${dirinfo}
@@ -84,3 +100,5 @@ echo "Cloudera Director URL is http://${dirshorthost}.cdh-cluster.internal:7189/
 # NOTE: Selinux must be disabled or set to permissive to allow DNS to be registered for cluster instances
 echo 'rebooting to fix selinux'
 ssh -tt ${SSH_USERNAME}@azure-director 'sudo reboot'
+
+exit 0
