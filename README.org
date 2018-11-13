@@ -23,29 +23,71 @@ The emphasis on this training is:
    + Automatically bring up CDSW with wildcard DNS
 
 
-* Set up an instance for Cloudera Altus Director
-
-Script to use to provision and configure a Director instance: [[file:bin/provision-azure.sh][provision-azure.sh]]
-
-We'll be using Director 6.0, which is capable of bringing up CDH 6 and 5x clusters.
-
-The instance will include MariaDB on Centos 7, which will be used for the Director
-database.  This same instance may be used for the metadata database used by your
-Director-instantiated clusters.
-
-This instance will also run the =bind= DNS server, which on Azure is a necessity.  Our
-setup scrpit will add a rule to serve wildcard DNS for use by Cloudera Data Science
-Workbench.
-
-** Install Azure command line client
-
-Documentation: [[https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest][Install the Azure CLI]]
-
+* Pre-work - set up prior to Cloud Training on [2018-11-19 Mon]
+** Clone the Macathon repository to your workstation
 #+BEGIN_SRC sh
-  brew update && brew install azure-cli
+  git clone git@github.com:gregoryg/macathon-director.git
 #+END_SRC
 
-** Configure Altus CLI
-#+BEGIN_SRC sh
-  az login
-#+END_SRC
+The examples below assume you will be using the SA or SE Azure subscription.
+
+If you are familiar with cloud platforms, please consider using either GCP or AWS instead,
+as we are very likely to run out of Azure resources during the hands on lab.  You can
+modify the config files in the =macathon-director= repo - pull requests are very welcome!
+
+
+** Set up an instance for Cloudera Altus Director
+
+ Script to use to provision and configure a Director instance: [[file:bin/provision-azure.sh][provision-azure.sh]]
+
+ We'll be using Director 6.0, which is capable of bringing up CDH 6 and 5x clusters.
+
+ The instance will include MariaDB on Centos 7, which will be used for the Director
+ database.  This same instance may be used for the metadata database used by your
+ Director-instantiated clusters.
+
+ This instance will also run the =bind= DNS server, which on Azure is a necessity.  Our
+ setup scrpit will add a rule to serve wildcard DNS for use by Cloudera Data Science
+ Workbench.
+
+*** Install Azure command line client
+
+ Documentation: [[https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest][Install the Azure CLI]]
+
+ #+BEGIN_SRC sh
+   brew update && brew install azure-cli
+ #+END_SRC
+
+*** Configure Altus CLI
+ #+BEGIN_SRC sh
+   az login
+ #+END_SRC
+
+*** Bring up a cluster using your Altus Director instance
+
+ The config file and supporting scripts are found in your home directory under =macathon-director=
+
+ Config being used for this workshop is in =configs/cdh5-cdsw1-director2.conf=
+
+ Edit =providers/azure-provider.conf= with your Azure credentials
+
+ Edit =azure-instance-defaults.conf= with your resource names: resource group(s), Vnet, network security group, subnet
+
+ Edit =cdh5-cdsw1-director2.conf= and add your private SSH key (you will need to copy that key to the instance)
+
+ Review the environment variables in the first few lines of the config, and set them to your preference.  
+
+ Launch the CLI to create the cluster.  An example of the command line:
+ #+BEGIN_SRC sh
+   OWNER_TAG=jsmith INSTANCE_PREFIX=js cloudera-director bootstrap-remote cdh5-cdsw1-director2.conf
+ #+END_SRC
+
+*** Ingest data and test Hue/Hive/Impala/CDSW et al
+    Some public data source ingest scripts may be found [[https://github.com/gregoryg/cdh-projects/tree/master/ingest][here]]
+*** Additional Resources for Altus Director configurations
+
+ [[https://github.com/cloudera/director-scripts]] - look in =configs= directory
+
+ [[https://github.com/gregoryg/cdh-projects]]
+
+
