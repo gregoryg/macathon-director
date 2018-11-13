@@ -1,10 +1,11 @@
 #!/bin/bash
 # TODO: create additional resources including vnet,nsg
-# TODO: reuse NSG: gg-directorNSG
+# TODO: reuse NSG: js-directorNSG
 
-OWNER_TAG=${OWNER_TAG:=${USER}}  # example: gregoryg
+OWNER_TAG=${OWNER_TAG:=${USER}}  # example: jsmith
 SSH_USERNAME=${SHELL_USERNAME:=${USER}} # example: gregj/centos/ec2-user
-AZ_RESOURCE_GROUP=${AZ_RESOURCE_GROUP:=${USER}-rg} # example: gregoryg-rg
+AZ_RESOURCE_GROUP=${AZ_RESOURCE_GROUP:=${USER}-rg} # example: jsmith-rg
+AZ_INSTANCE_NAME=${AZ_INSTANCE_NAME:=abc-director} # example: js-director
 
 echo 'Starting provisioning of instance on Azure - please use default DNS for your VNET!'
 az account set --subscription 'Sales Engineering'
@@ -17,22 +18,22 @@ fi
 dirinfo=$(az vm create \
     --size STANDARD_DS13_V2 \
     --resource-group ${AZ_RESOURCE_GROUP} \
-    --name gg-director \
+    --name ${AZ_INSTANCE_NAME} \
     --tags owner=${OWNER_TAG} \
     --image CentOS \
     --admin-username ${SSH_USERNAME} \
-    --ssh-key-value "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDkOQoHHMfrNitnGIu/1wP/e0UBqVNFr850RY2Hfp1ooPHXxkLX7v1kA9H0hr0WE3zdubmvej+AXv2uw0uIc4tFL6lSTM5XE1Dmb80cHcApOBeuJI4L06BJQCxdlLKDqKRi9D5TTsEuv1tC7+dr+fqbNu7K3wwuOz51tK6pAxKbMCYt9lerIG0Wo+70C8BvA9pLD7YhqfwCHhQVX3MHVrSYhyevToXMTzMhKF5bjQ4Y8C67FaYdbYDOq8IECYMNpW8jbDC3AuQP5HtbhE7dsFwWXV8ZanQjXN1CDyz+D5pJFWUi4S0I0emZkwZGwfshdl/MP4CiZeWnrdEHOzCndnYN gregoryg@gregoryg-MBP.local")
+    --ssh-key-value "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDkOQoHHMfrNitnGIu/1wP/e0UBqVNFr850RY2Hfp1ooPHXxkLX7v1kA9H0hr0WE3zdubmvej+AXv2uw0uIc4tFL6lSTM5XE1Dmb80cHcApOBeuJI4L06BJQCxdlLKDqKRi9D5TTsEuv1tC7+dr+fqbNu7K3wwuOz51tK6pAxKbMCYt9lerIG0Wo+70C8BvA9pLD7YhqfwCHhQVX3MHVrSYhyevToXMTzMhKF5bjQ4Y8C67FaYdbYDOq8IECYMNpW8jbDC3AuQP5HtbhE7dsFwWXV8ZanQjXN1CDyz+D5pJFWUi4S0I0emZkwZGwfshdl/MP4CiZeWnrdEHOzCndnYN jsmith@jsmith-MBP.local")
 if [ "$?" != 0 ] ; then
     echo "Error encountered:"
     echo ${dirinfo}
     exit 1
 fi
-    # --image gg-centos74-director26 \
+    # --image js-centos74-director26 \
 
 if [ -x $(dirname "$0")/create-ssh-config.sh ] ; then
     $(dirname "$0")/create-ssh-config.sh
 fi
-
+p
 dirip=`echo ${dirinfo} | jq -r '.publicIpAddress'`
 echo 'Fixing up the .ssh/config file'
 gsed -i.bak "/^ *Host azure-director */,/^ *Host /{s/^\( *Hostname *\)\(.*\)/\1$dirip/}" ~/.ssh/config
