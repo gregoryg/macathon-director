@@ -100,6 +100,7 @@ echo """
   """ | sudo tee /etc/my.cnf.d/server.cnf
 
 sudo service mariadb start
+sudo chkconfig mariadb on
 
 
 echo 'setting up cmdbadmin MariaDB user for admin'
@@ -150,6 +151,7 @@ echo """
   }
   """ | sudo tee /var/lib/cloudera-director-plugins/google-provider-2.0.0/etc/google.conf
 sudo service cloudera-director-server start
+sudo chkconfig cloudera-director-server on
 
 
 echo 'Adding wildcard DNS to bind for *.cdsw.internal'

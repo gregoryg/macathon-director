@@ -13,6 +13,7 @@ Owner tag: ${OWNER_TAG}
 SSH User: ${SSH_USERNAME}
 Azure resource group: ${AZ_RESOURCE_GROUP} (must exist on your Azure axcount)
 Instance name: ${AZ_INSTANCE_NAME}
+SSH public key: ~/.ssh/${SSH_KEYNAME}
 """
 read -p  "Proceed? [Y/n]: " -n 1 -r
 # echo
@@ -37,7 +38,7 @@ dirinfo=$(az vm create \
     --tags owner=${OWNER_TAG} \
     --image CentOS \
     --admin-username ${SSH_USERNAME} \
-    --ssh-key-value @~/.ssh/${SSH_KEYNAME})
+    --ssh-key-value  "`cat ~/.ssh/${SSH_KEYNAME}`")
 
 if [ "$?" != 0 ] ; then
     echo "Error encountered:"
@@ -85,8 +86,8 @@ do
     ssh ${SSH_USERNAME}@azure-director 'nc `hostname` 7189 < /dev/null'
     ret=$?
     if [ ${ret} == 0 ] ; then
-        echo Opening Director web page
-        open "http://${dirhost}:7189/"
+        # echo Opening Director web page
+        # open "http://${dirhost}:7189/"
         break
     else
         echo -n .
