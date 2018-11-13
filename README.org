@@ -58,10 +58,19 @@ modify the config files in the =macathon-director= repo - pull requests are very
    brew update && brew install azure-cli
  #+END_SRC
 
-*** Configure Altus CLI
+*** Configure Azure CLI
  #+BEGIN_SRC sh
    az login
  #+END_SRC
+
+*** Provision, install and configure your Altus Director instance
+Use the script provided in the =macathon-director= repository you downloaded.
+
+An example of usage of the provisioning script is shown below.
+
+#+BEGIN_SRC sh
+  OWNER_TAG=jsmith SSH_USERNAME=jsmith AZ_RESOURCE_GROUP=jsmith-rg SSH_KEYNAME=jsmith-azure.pub AZ_INSTANCE_NAME=js-director time ./provision-azure.sh 
+#+END_SRC
 
 *** Bring up a cluster using your Altus Director instance
 
