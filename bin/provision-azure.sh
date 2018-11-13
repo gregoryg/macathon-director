@@ -50,7 +50,7 @@ fi
 if [ -x $(dirname "$0")/create-ssh-config.sh ] ; then
     $(dirname "$0")/create-ssh-config.sh
 fi
-p
+
 dirip=`echo ${dirinfo} | jq -r '.publicIpAddress'`
 echo 'Fixing up the .ssh/config file'
 gsed -i.bak "/^ *Host azure-director */,/^ *Host /{s/^\( *Hostname *\)\(.*\)/\1$dirip/}" ~/.ssh/config
@@ -71,15 +71,14 @@ ssh -tt ${SSH_USERNAME}@azure-director 'sudo yum -y install wget git'
 
 echo 'Placing director-scripts on instance - use DNS scripts on Azure'
 ssh ${SSH_USERNAME}@azure-director "git clone 'https://github.com/cloudera/director-scripts.git'"
+ssh ${SSH_USERNAME}@azure-director "wget 'https://raw.githubusercontent.com/gregoryg/macathon-director/master/bin/configure-director-instance.sh'"
 
 
 echo 'Now please set DNS - set internal domain to cdh-cluster.internal'
 ssh -tt ${SSH_USERNAME}@azure-director 'sudo hostname `hostname -s`.cdh-cluster.internal'
 ssh -tt ${SSH_USERNAME}@azure-director 'sudo bash ./director-scripts/azure-dns-scripts/bind-dns-setup.sh'
 
-ssh ${SSH_USERNAME}@azure-director "wget 'https://raw.githubusercontent.com/gregoryg/macathon-director/master/bin/configure-director-instance.sh'"
 ssh -tt ${SSH_USERNAME}@azure-director 'bash ./configure-director-instance.sh'
-
 
 # echo Starting proxy
 # emacsclient -n '/ssh:${SSH_USERNAME}@azure-director:'
