@@ -29,6 +29,10 @@ if [ "$?" != 0 ] ; then
 fi
     # --image gg-centos74-director26 \
 
+if [ -x $(dirname "$0")/create-ssh-config.sh ] ; then
+    $(dirname "$0")/create-ssh-config.sh
+fi
+
 dirip=`echo ${dirinfo} | jq -r '.publicIpAddress'`
 echo 'Fixing up the .ssh/config file'
 gsed -i.bak "/^ *Host azure-director */,/^ *Host /{s/^\( *Hostname *\)\(.*\)/\1$dirip/}" ~/.ssh/config
