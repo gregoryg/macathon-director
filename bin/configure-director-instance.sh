@@ -175,8 +175,8 @@ cdsw.internal.	IN SOA	   gg-director.cdsw.internal. hostmaster.cdh-cluster.inter
 				)
 			NS	.
 \$ORIGIN cdsw.internal.
-    		A	10.1.10.10
-*.cdsw.internal.                       A       10.1.10.10
+    		A	10.0.0.6
+*.cdsw.internal.                       A       10.0.0.6
 """ | sudo tee /etc/named/zones/db.cdsw
 # echo 'Adding rule to Dnsmasq to enable wildcard DNS for *.cdsw.internal'
 # echo """
