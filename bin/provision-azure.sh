@@ -106,8 +106,8 @@ ssh -tt ${SSH_USERNAME}@azure-director 'sudo reboot'
 echo 'When the instance reboots, start a proxy with '
 echo "    ssh ${SSH_USERNAME}@azure-director"
 echo "or (if not using the ssh config file): ssh -i ~/.ssh/${SSH_KEYNAME} ${SSH_USERNAME}@${dirip} -D 8159 -A"
-echo
-echo "Cloudera Director URL is http://${dirshorthost}.cdh-cluster.internal:7189/"
+echo "TRAMP URI: /ssh:azure-director:"
+echo "Cloudera Director URL: http://${dirshorthost}.cdh-cluster.internal:7189/"
 
 
 exit 0

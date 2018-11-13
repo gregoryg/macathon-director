@@ -21,6 +21,18 @@ sudo rm -fv /usr/java/default /usr/java/latest
 sudo ln -s /usr/java/jdk1.8.0_141-cloudera /usr/java/default
 sudo ln -s /usr/java/jdk1.8.0_141-cloudera /usr/java/latest
 
+# Disable chrony so it does not conflict with ntpd installed by Director
+sudo systemctl stop chronyd
+sudo systemctl disable chronyd
+# update config to disable IPv6 and disable
+echo "# Disable IPv6" >> /etc/sysctl.conf
+echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.conf
+echo "net.ipv6.conf.default.disable_ipv6 = 1" >> /etc/sysctl.conf
+# swappiness is set by Director in /etc/sysctl.conf
+# Poke sysctl to have it pickup the config change.
+sysctl -p
+
+
 echo 'installing Cloudera Altus Director 6 and supporting software'
 (cd /tmp; wget 'http://archive.cloudera.com/director6/6.0.0/redhat7/cloudera-director.repo')
 sudo mv -v /tmp/cloudera-director.repo /etc/yum.repos.d/
