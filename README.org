@@ -1,3 +1,17 @@
+#+OPTIONS: ':nil *:nil -:t ::t <:t H:3 \n:nil ^:{} arch:headline author:t broken-links:mark
+#+OPTIONS: c:nil creator:t d:(not "LOGBOOK") date:t e:t email:nil f:t inline:t num:2
+#+OPTIONS: p:nil pri:nil prop:nil stat:t tags:t tasks:t tex:t timestamp:t title:t toc:2
+#+OPTIONS: todo:t |:t
+#+TITLE: Director Configs for Macathon Nov. 2018
+#+DATE: [2018-11-13 Tue]
+#+AUTHOR: Gregory Grubbs
+#+EMAIL: gregoryg@cloudera.com
+#+LANGUAGE: en
+#+SELECT_TAGS: export
+#+EXCLUDE_TAGS: noexport
+#+CREATOR: Emacs 25.1.1 (Org mode 9.0.1)
+#+SETUPFILE: https://raw.githubusercontent.com/fniessen/org-html-themes/master/setup/theme-readtheorg.setup
+
 * macathon-director
 
 Configs for using Cloudera Altus Director
@@ -9,3 +23,29 @@ The emphasis on this training is:
    + Automatically bring up CDSW with wildcard DNS
 
 
+* Set up an instance for Cloudera Altus Director
+
+Script to use to provision and configure a Director instance: [[file:bin/provision-azure.sh][provision-azure.sh]]
+
+We'll be using Director 6.0, which is capable of bringing up CDH 6 and 5x clusters.
+
+The instance will include MariaDB on Centos 7, which will be used for the Director
+database.  This same instance may be used for the metadata database used by your
+Director-instantiated clusters.
+
+This instance will also run the =bind= DNS server, which on Azure is a necessity.  Our
+setup scrpit will add a rule to serve wildcard DNS for use by Cloudera Data Science
+Workbench.
+
+** Install Azure command line client
+
+Documentation: [[https://www.cloudera.com/documentation/altus/topics/alt_client_setup.html][Cloudera Altus Client Setup]]
+
+#+BEGIN_SRC sh
+  pip install altuscli
+#+END_SRC
+
+** Verify Altus CLI is properly configured
+#+BEGIN_SRC sh
+  altus iam get-user
+#+END_SRC
