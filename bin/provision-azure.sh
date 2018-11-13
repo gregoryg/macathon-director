@@ -78,29 +78,33 @@ echo 'Now please set DNS - set internal domain to cdh-cluster.internal'
 ssh -tt ${SSH_USERNAME}@azure-director 'sudo hostname `hostname -s`.cdh-cluster.internal'
 ssh -tt ${SSH_USERNAME}@azure-director 'sudo bash ./director-scripts/azure-dns-scripts/bind-dns-setup.sh'
 
-echo Starting proxy
-emacsclient -n '/ssh:${SSH_USERNAME}@azure-director:'
-echo waiting for Director to become available
-sleep 30
-for i in 1 2 3 4 5 6 7 8 9 10
-do
-    ssh ${SSH_USERNAME}@azure-director 'nc `hostname` 7189 < /dev/null'
-    ret=$?
-    if [ ${ret} == 0 ] ; then
-        # echo Opening Director web page
-        # open "http://${dirhost}:7189/"
-        break
-    else
-        echo -n .
-        sleep 10
-    fi
-done
-
-echo
-echo "Cloudera Director URL is http://${dirshorthost}.cdh-cluster.internal:7189/"
+# echo Starting proxy
+# emacsclient -n '/ssh:${SSH_USERNAME}@azure-director:'
+# echo waiting for Director to become available
+# sleep 30
+# for i in 1 2 3 4 5 6 7 8 9 10
+# do
+#     ssh ${SSH_USERNAME}@azure-director 'nc `hostname` 7189 < /dev/null'
+#     ret=$?
+#     if [ ${ret} == 0 ] ; then
+#         # echo Opening Director web page
+#         # open "http://${dirhost}:7189/"
+#         break
+#     else
+#         echo -n .
+#         sleep 10
+#     fi
+# done
 
 # NOTE: Selinux must be disabled or set to permissive to allow DNS to be registered for cluster instances
 echo 'rebooting to fix selinux'
 ssh -tt ${SSH_USERNAME}@azure-director 'sudo reboot'
+
+echo 'When the instance reboots, start a proxy with '
+echo "    ssh ${SSH_USERNAME}@azure-director"
+echo "or (if not using the ssh config file): ssh -i ~/.ssh/${SSH_KEYNAME} ${SSH_USERNAME}@${dirip} -D 8159 -A"
+echo
+echo "Cloudera Director URL is http://${dirshorthost}.cdh-cluster.internal:7189/"
+
 
 exit 0
