@@ -72,7 +72,7 @@ An example of usage of the provisioning script is shown below.
   OWNER_TAG=jsmith SSH_USERNAME=jsmith AZ_RESOURCE_GROUP=jsmith-rg SSH_KEYNAME=jsmith-azure.pub AZ_INSTANCE_NAME=js-director time ./provision-azure.sh 
 #+END_SRC
 
-*** Bring up a cluster using your Altus Director instance
+** Bring up a cluster using your Altus Director instance
 
  The config file and supporting scripts are found in your home directory under =macathon-director=
 
@@ -91,9 +91,9 @@ An example of usage of the provisioning script is shown below.
    OWNER_TAG=jsmith INSTANCE_PREFIX=js cloudera-director bootstrap-remote cdh5-cdsw1-director2.conf
  #+END_SRC
 
-*** Ingest data and test Hue/Hive/Impala/CDSW et al
+** Ingest data and test Hue/Hive/Impala/CDSW et al
     Some public data source ingest scripts may be found [[https://github.com/gregoryg/cdh-projects/tree/master/ingest][here]]
-*** Additional Resources for Altus Director configurations
+** Additional Resources for Altus Director configurations
 
  [[https://github.com/cloudera/director-scripts]] - look in =configs= directory
 
