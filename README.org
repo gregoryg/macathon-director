@@ -24,6 +24,11 @@ The emphasis on this training is:
 
 
 * Pre-work - set up prior to Cloud Training on [2018-11-19 Mon]
+
+Prior to coming to the Cloud hands on lab, please assure you have access and some
+familiarity with the cloud console of your choice: AWS, GCP or Azure. 
+
+
 ** Clone the Macathon repository to your workstation
 #+BEGIN_SRC sh
   git clone git@github.com:gregoryg/macathon-director.git
@@ -35,7 +40,21 @@ If you are familiar with cloud platforms, please consider using either GCP or AW
 as we are very likely to run out of Azure resources during the hands on lab.  You can
 modify the config files in the =macathon-director= repo - pull requests are very welcome!
 
+** Install Azure command line client
 
+ Documentation: [[https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest][Install the Azure CLI]]
+
+ #+BEGIN_SRC sh
+   brew update && brew install azure-cli
+ #+END_SRC
+
+** Configure Azure CLI
+ #+BEGIN_SRC sh
+   az login
+ #+END_SRC
+
+
+* Work to be done during Macathon training on [2018-11-19 Mon]
 ** Set up an instance for Cloudera Altus Director
 
  Script to use to provision and configure a Director instance: [[file:bin/provision-azure.sh][provision-azure.sh]]
@@ -49,19 +68,6 @@ modify the config files in the =macathon-director= repo - pull requests are very
  This instance will also run the =bind= DNS server, which on Azure is a necessity.  Our
  setup scrpit will add a rule to serve wildcard DNS for use by Cloudera Data Science
  Workbench.
-
-*** Install Azure command line client
-
- Documentation: [[https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest][Install the Azure CLI]]
-
- #+BEGIN_SRC sh
-   brew update && brew install azure-cli
- #+END_SRC
-
-*** Configure Azure CLI
- #+BEGIN_SRC sh
-   az login
- #+END_SRC
 
 *** Provision, install and configure your Altus Director instance
 Use the script provided in the =macathon-director= repository you downloaded.
