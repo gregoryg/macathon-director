@@ -23,13 +23,17 @@ if [[ ! $REPLY =~ ^[Yy]$ ]] ; then
     exit 1
 fi
 
-echo 'Starting provisioning of instance on Azure - please use default DNS for your VNET!'
+
+echo 'Create resource group if it does not exist'
+az group create --location westus --tags owner=gregoryg --name gregoryg-rg >/dev/null
+
 az account set --subscription 'Sales Engineering'
 
 if [ "$?" != 0 ] ; then
    exit
 fi
 
+echo 'Starting provisioning of instance on Azure - please use default DNS for your VNET!'
 # 1) Launch combined Director/MariaDB instance
 dirinfo=$(az vm create \
     --size STANDARD_DS13_V2 \
@@ -57,7 +61,7 @@ gsed -i.bak "/^ *Host azure-director */,/^ *Host /{s/^\( *Hostname *\)\(.*\)/\1$
 diff ~/.ssh/config.bak ~/.ssh/config
 
 echo 'Disabling selinux'
-ssh -tt ${SSH_USERNAME}@azure-director "sudo sed -i.bak 's/^\(SELINUX=\).*/\1disabled/' /etc/selinux/config"
+ssh -tt ${SSH_USERNAME}@azure-director "sudo setenforce 0; sudo sed -i.bak 's/^\(SELINUX=\).*/\1disabled/' /etc/selinux/config"
 
 
 echo 'Assuring instance can resolve internet DHCP - in case DNS is still set to custom'
@@ -79,6 +83,7 @@ ssh -tt ${SSH_USERNAME}@azure-director 'bash ./configure-director-instance.sh'
 echo 'Now please set DNS - set internal domain to cdh-cluster.internal'
 ssh -tt ${SSH_USERNAME}@azure-director 'sudo hostname `hostname -s`.cdh-cluster.internal'
 ssh -tt ${SSH_USERNAME}@azure-director 'sudo bash ./director-scripts/azure-dns-scripts/bind-dns-setup.sh'
+ssh -tt ${SSH_USERNAME}@azure-director 'sudo service named restart; sudo bash ./director-scripts/azure-dns-scripts/dns-test.sh'
 
 
 # echo Starting proxy
@@ -100,10 +105,8 @@ ssh -tt ${SSH_USERNAME}@azure-director 'sudo bash ./director-scripts/azure-dns-s
 # done
 
 # NOTE: Selinux must be disabled or set to permissive to allow DNS to be registered for cluster instances
-echo 'rebooting to fix selinux'
-ssh -tt ${SSH_USERNAME}@azure-director 'sudo reboot'
 
-echo 'When the instance reboots, start a proxy with '
+echo 'Start a proxy with '
 echo "    ssh ${SSH_USERNAME}@azure-director"
 echo "or (if not using the ssh config file): ssh -i ~/.ssh/${SSH_KEYNAME} ${SSH_USERNAME}@${dirip} -D 8159 -A"
 echo "TRAMP URI: /ssh:azure-director:"
