@@ -9,7 +9,7 @@ function FindProxyForURL(url, host) {
         return "SOCKS5 localhost:8159";
     }
 
-    // match CDSW wildcard DNS for Azure or GCP or AWS
+    // match CDSW wildcard DNS
     if (shExpMatch(host, "*cdsw.internal") ) {
         return "SOCKS5 localhost:8159";
     }
