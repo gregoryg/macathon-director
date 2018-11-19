@@ -25,7 +25,7 @@ fi
 
 
 echo 'Create resource group if it does not exist'
-az group create --location westus --tags owner=gregoryg --name gregoryg-rg >/dev/null
+az group create --location westus --tags owner=gregoryg --name ${AZ_RESOURCE_GROUP} >/dev/null
 
 az account set --subscription 'Sales Engineering'
 
