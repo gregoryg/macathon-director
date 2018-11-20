@@ -2,11 +2,13 @@
 # TODO: create additional resources including vnet,nsg
 # TODO: reuse NSG: js-directorNSG
 
+# Edit the defaults below or use environment variables to override
 OWNER_TAG=${OWNER_TAG:=${USER}}  # example: jsmith
 SSH_USERNAME=${SSH_USERNAME:=${USER}} # example: gregj/centos/ec2-user
 AZ_RESOURCE_GROUP=${AZ_RESOURCE_GROUP:=${USER}-rg} # example: jsmith-rg
 AZ_INSTANCE_NAME=${AZ_INSTANCE_NAME:=abc-director} # example: js-director
 SSH_KEYNAME=${SSH_KEYNAME:=abc-azure.pub}
+SUBSCRIPTION_NAME=${SUBSCRIPTION_NAME:=Sales Engineering} # or Professional Services
 
 echo """Using the following values:
 Owner tag: ${OWNER_TAG}
@@ -25,9 +27,9 @@ fi
 
 
 echo 'Create resource group if it does not exist'
-az group create --location westus --tags owner=gregoryg --name ${AZ_RESOURCE_GROUP} >/dev/null
+az group create --location westus --tags owner=${OWNER_TAG} --name ${AZ_RESOURCE_GROUP} >/dev/null
 
-az account set --subscription 'Sales Engineering'
+az account set --subscription "${SUBSCRIPTION_NAME}"
 
 if [ "$?" != 0 ] ; then
    exit
@@ -56,34 +58,36 @@ if [ -x $(dirname "$0")/create-ssh-config.sh ] ; then
 fi
 
 dirip=`echo ${dirinfo} | jq -r '.publicIpAddress'`
-echo 'Fixing up the .ssh/config file'
-gsed -i.bak "/^ *Host azure-director */,/^ *Host /{s/^\( *Hostname *\)\(.*\)/\1$dirip/}" ~/.ssh/config
-diff ~/.ssh/config.bak ~/.ssh/config
+sshcmd="ssh -tt -i ~/.ssh/${SSH_KEYNAME} ${SSH_USERNAME}@${dirip} "
+
+# echo 'Fixing up the .ssh/config file'
+# gsed -i.bak "/^ *Host azure-director */,/^ *Host /{s/^\( *Hostname *\)\(.*\)/\1$dirip/}" ~/.ssh/config
+# diff ~/.ssh/config.bak ~/.ssh/config
 
 echo 'Disabling selinux'
-ssh -tt ${SSH_USERNAME}@azure-director "sudo setenforce 0; sudo sed -i.bak 's/^\(SELINUX=\).*/\1disabled/' /etc/selinux/config"
+${sshcmd} "sudo setenforce 0; sudo sed -i.bak 's/^\(SELINUX=\).*/\1disabled/' /etc/selinux/config"
 
 
 echo 'Assuring instance can resolve internet DHCP - in case DNS is still set to custom'
-ssh -tt ${SSH_USERNAME}@azure-director "echo 'nameserver 8.8.8.8' | sudo tee -a /etc/resolve.conf"
+${sshcmd} "echo 'nameserver 8.8.8.8' | sudo tee -a /etc/resolve.conf"
 
 echo 'Setting up MariaDB/MySQL, Altus Director and Bind'
 
-dirhost=`ssh ${SSH_USERNAME}@azure-director "hostname -f"`
-dirshorthost=`ssh ${SSH_USERNAME}@azure-director "hostname -s"`
-ssh -tt ${SSH_USERNAME}@azure-director 'sudo yum -y install wget git'
+dirhost=`${sshcmd} "hostname -f"`
+dirshorthost=`${sshcmd} "hostname -s"`
+${sshcmd} 'sudo yum -y install wget git'
 
 echo 'Placing director-scripts on instance - use DNS scripts on Azure'
-ssh ${SSH_USERNAME}@azure-director "git clone 'https://github.com/cloudera/director-scripts.git'"
-ssh ${SSH_USERNAME}@azure-director "wget 'https://raw.githubusercontent.com/gregoryg/macathon-director/master/bin/configure-director-instance.sh'"
+${sshcmd} "git clone 'https://github.com/cloudera/director-scripts.git'"
+${sshcmd} "wget 'https://raw.githubusercontent.com/gregoryg/macathon-director/master/bin/configure-director-instance.sh'"
 
 
-ssh -tt ${SSH_USERNAME}@azure-director 'bash ./configure-director-instance.sh'
+${sshcmd} 'bash ./configure-director-instance.sh'
 
 echo 'Now please set DNS - set internal domain to cdh-cluster.internal'
-ssh -tt ${SSH_USERNAME}@azure-director 'sudo hostname `hostname -s`.cdh-cluster.internal'
-ssh -tt ${SSH_USERNAME}@azure-director 'sudo bash ./director-scripts/azure-dns-scripts/bind-dns-setup.sh'
-ssh -tt ${SSH_USERNAME}@azure-director 'sudo service named restart; sudo bash ./director-scripts/azure-dns-scripts/dns-test.sh'
+${sshcmd} 'sudo hostname `hostname -s`.cdh-cluster.internal'
+${sshcmd} 'sudo bash ./director-scripts/azure-dns-scripts/bind-dns-setup.sh'
+${sshcmd} 'sudo service named restart; sudo bash ./director-scripts/azure-dns-scripts/dns-test.sh'
 
 
 # echo Starting proxy
@@ -92,7 +96,7 @@ ssh -tt ${SSH_USERNAME}@azure-director 'sudo service named restart; sudo bash ./
 # sleep 30
 # for i in 1 2 3 4 5 6 7 8 9 10
 # do
-#     ssh ${SSH_USERNAME}@azure-director 'nc `hostname` 7189 < /dev/null'
+#     ${sshcmd} 'nc `hostname` 7189 < /dev/null'
 #     ret=$?
 #     if [ ${ret} == 0 ] ; then
 #         # echo Opening Director web page
@@ -107,8 +111,7 @@ ssh -tt ${SSH_USERNAME}@azure-director 'sudo service named restart; sudo bash ./
 # NOTE: Selinux must be disabled or set to permissive to allow DNS to be registered for cluster instances
 
 echo 'Start a proxy with '
-echo "    ssh ${SSH_USERNAME}@azure-director"
-echo "or (if not using the ssh config file): ssh -i ~/.ssh/${SSH_KEYNAME} ${SSH_USERNAME}@${dirip} -D 8159 -A"
+echo "ssh -i ~/.ssh/${SSH_KEYNAME} ${SSH_USERNAME}@${dirip} -D 8159 -A"
 echo "TRAMP URI: /ssh:azure-director:"
 echo "Cloudera Director URL: http://${dirshorthost}.cdh-cluster.internal:7189/"
 
