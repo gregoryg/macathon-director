@@ -1,4 +1,5 @@
 #!/bin/bash
+# TODO: try -E with BSD sed for compatibility
 # TODO: create additional resources including vnet,nsg
 # TODO: reuse NSG: js-directorNSG
 
