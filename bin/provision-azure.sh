@@ -10,7 +10,13 @@ AZ_INSTANCE_NAME=${AZ_INSTANCE_NAME:=abc-director} # example: js-director
 SSH_KEYNAME=${SSH_KEYNAME:=abc-azure.pub}
 SUBSCRIPTION_NAME=${SUBSCRIPTION_NAME:=Sales Engineering} # or Professional Services
 
-echo """Using the following values:
+if [ ! -r ~/.ssh/${SSH_KEYNAME} ] ; then
+    echo "Path ~/.ssh/${SSH_KEYNAME} does not exist or cannot be read. - Exiting"
+    exit 1
+fi
+
+echo """Using the following values
+Azure subscription: ${SUBSCRIPTION_NAME}
 Owner tag: ${OWNER_TAG}
 SSH User: ${SSH_USERNAME}
 Azure resource group: ${AZ_RESOURCE_GROUP} (must exist on your Azure axcount)
@@ -28,6 +34,10 @@ fi
 
 echo 'Create resource group if it does not exist'
 az group create --location westus --tags owner=${OWNER_TAG} --name ${AZ_RESOURCE_GROUP} >/dev/null
+
+if [ "$?" -ne 0 ] ; then
+    exit 1
+fi
 
 az account set --subscription "${SUBSCRIPTION_NAME}"
 
@@ -53,11 +63,17 @@ if [ "$?" != 0 ] ; then
 fi
     # --image js-centos74-director26 \
 
-if [ -x $(dirname "$0")/create-ssh-config.sh ] ; then
-    $(dirname "$0")/create-ssh-config.sh
+# if [ -x $(dirname "$0")/create-ssh-config.sh ] ; then
+#     $(dirname "$0")/create-ssh-config.sh
+# fi
+
+# use jq if available, as it's more reliable parsing JSON
+if [ type -P jq > /dev/null 2>&1 ] ; then
+    dirip=`echo ${dirinfo} | jq -r '.publicIpAddress'`
+else
+    dirip=`echo ${dirinfo} | grep -P -o  '"publicIpAddress"\s*:\s*"?\K[^,\}"]+'`
 fi
 
-dirip=`echo ${dirinfo} | jq -r '.publicIpAddress'`
 sshcmd="ssh -tt -i ~/.ssh/${SSH_KEYNAME} ${SSH_USERNAME}@${dirip} "
 
 # echo 'Fixing up the .ssh/config file'
@@ -65,7 +81,7 @@ sshcmd="ssh -tt -i ~/.ssh/${SSH_KEYNAME} ${SSH_USERNAME}@${dirip} "
 # diff ~/.ssh/config.bak ~/.ssh/config
 
 echo 'Disabling selinux'
-${sshcmd} "sudo setenforce 0; sudo sed -i.bak 's/^\(SELINUX=\).*/\1disabled/' /etc/selinux/config"
+${sshcmd} -o StrictHostKeyChecking=no "sudo setenforce 0; sudo sed -i.bak 's/^\(SELINUX=\).*/\1disabled/' /etc/selinux/config"
 
 
 echo 'Assuring instance can resolve internet DHCP - in case DNS is still set to custom'
