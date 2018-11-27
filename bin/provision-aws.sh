@@ -23,6 +23,24 @@ SECURITY_GROUP=${SECURITY_GROUP:=sg-xxxxxxxx} # REPLACE with Security Group ID
 AWS_PROFILE=${AWS_PROFILE:=default}
 ### Do not edit below this line
 
+echo """Using the following values
+AWS CLI profile: ${AWS_PROFILE}
+Owner tag: ${OWNER_TAG}
+Region: ${REGION}
+Instance name: ${INSTANCE_NAME}
+Subnet / Security group: ${SUBNET} / ${SECURITY_GROUP}
+SSH User: ${SSH_USER}
+SSH keypair name: ${SSH_KEYNAME}
+SSH private key: ${SSH_PRIVATE_KEYPATH_AWS}
+"""
+read -p  "Proceed? [Y/n]: " -n 1 -r
+# echo
+
+if [[ ! $REPLY =~ ^[Yy]$ ]] ; then
+    echo Set the environment variables you require, then run this script again - exiting
+    exit 1
+fi
+
 aws_prefix="aws --profile ${AWS_PROFILE} --region ${REGION} "
 
 # Launch the Cloudera Director instance
