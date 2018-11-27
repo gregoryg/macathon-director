@@ -16,7 +16,7 @@ SSH_USER="${SSH_USER:=centos}" # examples: jsmith/centos/ec2-user
 INSTANCE_NAME=${INSTANCE_NAME:=abc-director} # example: js-director
 REGION=${REGION:=us-east-2} # REPLACE with region 
 SSH_KEYNAME=${SSH_KEYNAME:=REPLACE_ME_KEYNAME} # named SSH keypair in your AWS acct (EC2 -> Key Pairs)
-SSH_PRIVATE_KEYPATH_AWS=${SSH_PRIVATE_KEYPATH:=~/.ssh/${SSH_KEYNAME}.pem}
+SSH_PRIVATE_KEYPATH_AWS=${SSH_PRIVATE_KEYPATH_AWS:=~/.ssh/${SSH_KEYNAME}.pem}
 IMAGE=${IMAGE:=ami-e1496384} # REPLACE with CentOS or RHEL image
 SUBNET=${SUBNET:=subnet-xxxxxxxx} # REPLACE with Subnet ID
 SECURITY_GROUP=${SECURITY_GROUP:=sg-xxxxxxxx} # REPLACE with Security Group ID
@@ -88,7 +88,7 @@ if [ -x $(dirname "$0")/create-ssh-config.sh ] ; then
 fi
 
 sed -i.bak -E "/^ *Host aws-director */,/^ *Host / s/(Hostname) +(.*)/\1 ${dirip}/" ~/.ssh/config
-diff ~/.ssh/config ~/.ssh/config.bak
+diff ~/.ssh/config.bak ~/.ssh/config
 
 echo 'Disabling selinux'
 ${sshcmd} -o StrictHostKeyChecking=no "sudo setenforce 0; sudo sed -i.bak 's/^\(SELINUX=\).*/\1disabled/' /etc/selinux/config"
