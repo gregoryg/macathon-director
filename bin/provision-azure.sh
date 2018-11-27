@@ -8,13 +8,15 @@ OWNER_TAG=${OWNER_TAG:=${USER}}  # example: jsmith
 SSH_USER=${SSH_USER:=${USER}} # examples: gregj/centos/ec2-user
 INSTANCE_NAME=${INSTANCE_NAME:=abc-director} # example: js-director
 AZ_RESOURCE_GROUP=${AZ_RESOURCE_GROUP:=${USER}-rg} # example: jsmith-rg
-SSH_KEYNAME=${SSH_KEYNAME:=abc-azure.pub}
+SSH_KEYNAME_PUB_AZURE=${SSH_KEYNAME_PUB_AZURE:=abc-azure.pub}
 SUBSCRIPTION_NAME=${SUBSCRIPTION_NAME:=Sales Engineering} # or Professional Services
 
-if [ ! -r ~/.ssh/${SSH_KEYNAME} ] ; then
-    echo "Path ~/.ssh/${SSH_KEYNAME} does not exist or cannot be read. - Exiting"
+## Do not edit below this line
+if [ ! -r ~/.ssh/${SSH_KEYNAME_PUB_AZURE} ] ; then
+    echo "Path ~/.ssh/${SSH_KEYNAME_PUB_AZURE} does not exist or cannot be read. - Exiting"
     exit 1
 fi
+ssh_private_keypath_azure=`echo ${SSH_KEYNAME_PUB_AZURE} | sed 's,\.pub$,,'`
 
 echo """Using the following values
 Azure subscription: ${SUBSCRIPTION_NAME}
@@ -22,7 +24,8 @@ Owner tag: ${OWNER_TAG}
 SSH User: ${SSH_USER}
 Azure resource group: ${AZ_RESOURCE_GROUP} (must exist on your Azure axcount)
 Instance name: ${INSTANCE_NAME}
-SSH public key: ~/.ssh/${SSH_KEYNAME}
+SSH public key: ~/.ssh/${SSH_KEYNAME_PUB_AZURE}
+SSH private key: ~/.ssh/${ssh_private_keypath_azure}
 """
 read -p  "Proceed? [Y/n]: " -n 1 -r
 # echo
@@ -55,7 +58,7 @@ dirinfo=$(az vm create \
     --tags owner=${OWNER_TAG} \
     --image CentOS \
     --admin-username ${SSH_USER} \
-    --ssh-key-value  "`cat ~/.ssh/${SSH_KEYNAME}`")
+    --ssh-key-value  "`cat ~/.ssh/${SSH_KEYNAME_PUB_AZURE}`")
 
 if [ "$?" != 0 ] ; then
     echo "Error encountered:"
@@ -64,10 +67,6 @@ if [ "$?" != 0 ] ; then
 fi
     # --image js-centos74-director26 \
 
-# if [ -x $(dirname "$0")/create-ssh-config.sh ] ; then
-#     $(dirname "$0")/create-ssh-config.sh
-# fi
-
 # use jq if available, as it's more reliable parsing JSON
 if [ `type -P jq` > /dev/null 2>&1 ] ; then
     dirip=`echo ${dirinfo} | jq -r '.publicIpAddress'`
@@ -75,11 +74,16 @@ else
     dirip=`echo ${dirinfo} | grep -P -o  '"publicIpAddress"\s*:\s*"?\K[^,\}"]+'`
 fi
 
-sshcmd="ssh -tt -i ~/.ssh/${SSH_KEYNAME} ${SSH_USER}@${dirip} "
+sshcmd="ssh -tt -i ~/.ssh/${ssh_private_keypath_azure} ${SSH_USER}@${dirip} "
 
-# echo 'Fixing up the .ssh/config file'
-# gsed -i.bak "/^ *Host azure-director */,/^ *Host /{s/^\( *Hostname *\)\(.*\)/\1$dirip/}" ~/.ssh/config
-# diff ~/.ssh/config.bak ~/.ssh/config
+echo 'Fixing up the .ssh/config file'
+# Create a skeleton config if there is none there already
+if [ -x $(dirname "$0")/create-ssh-config.sh ] ; then
+    $(dirname "$0")/create-ssh-config.sh
+fi
+
+sed -i.bak -E "/^ *Host azure-director */,/^ *Host / s/(Hostname) +(.*)/\1 ${dirip}/" ~/.ssh/config
+diff ~/.ssh/config.bak ~/.ssh/config
 
 echo 'Disabling selinux'
 ${sshcmd} -o StrictHostKeyChecking=no "sudo setenforce 0; sudo sed -i.bak 's/^\(SELINUX=\).*/\1disabled/' /etc/selinux/config"
@@ -111,7 +115,7 @@ ${sshcmd} 'sudo service named restart; sudo bash ./director-scripts/azure-dns-sc
 # NOTE: Selinux must be disabled or set to permissive to allow DNS to be registered for cluster instances
 
 echo 'Start a proxy with '
-echo "ssh -i ~/.ssh/${SSH_KEYNAME} ${SSH_USER}@${dirip} -D 8159 -A"
+echo "ssh -i ~/.ssh/${ssh_private_keypath_azure} ${SSH_USER}@${dirip} -D 8159 -A"
 echo "TRAMP URI: /ssh:azure-director:"
 echo "Cloudera Director URL: http://${dirshorthost}.cdh-cluster.internal:7189/"
 

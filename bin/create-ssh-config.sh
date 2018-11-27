@@ -1,22 +1,24 @@
 #!/bin/bash
+SSH_KEYNAME_AZURE=${SSH_KEYNAME_AZURE:=REPLACE_ME_PRIVATE_KEY_AZURE}
+ssh_private_keypath_aws=${SSH_PRIVATE_KEYPATH_AWS:=REPLACE_ME_PRIVATE_KEY_AWS.pem}
+
 if [ ! -f ~/.ssh/config ] ; then
     echo """
 Host azure-director
-     # IdentityFile ~/.ssh/<<REPLACE_ME_PRIVATE_KEY>>
-     # User <<REPLACE_ME_SSH_USER>>
+     # IdentityFile ~/.ssh/${SSH_KEYNAME_AZURE}
+     # User REPLACE_ME_SSH_USER
      Hostname 1.1.1.1
      StrictHostKeyChecking no
      ForwardAgent yes
      DynamicForward 8159
 
 Host aws-director
-     # IdentityFile ~/.ssh/<<REPLACE_ME_PRIVATE_KEY>>.pem
-     # User <<REPLACE_ME_SSH_USER>>
-     Hostname 1.1.1.1
+     # IdentityFile ~/.ssh/${ssh_private_keypath_aws}
+     # User REPLACE_ME_SSH_USER
+     Hostname 2.2.2.2
      StrictHostKeyChecking no
      ForwardAgent yes
      DynamicForward 8157
-
 """ > ~/.ssh/config
     chmod 644 ~/.ssh/config
     echo 'Wrote new skeleton ~/.ssh/config'
