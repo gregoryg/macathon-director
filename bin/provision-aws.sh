@@ -16,7 +16,7 @@ SSH_USER="${SSH_USER:=centos}" # examples: jsmith/centos/ec2-user
 INSTANCE_NAME=${INSTANCE_NAME:=abc-director} # example: js-director
 REGION=${REGION:=us-east-2} # REPLACE with region 
 SSH_KEYNAME=${SSH_KEYNAME:=REPLACE_ME_KEYNAME} # named SSH keypair in your AWS acct (EC2 -> Key Pairs)
-SSH_PRIVATE_KEYPATH=${SSH_PRIVATE_KEYPATH:=~/.ssh/${SSH_KEYNAME}.pem}
+SSH_PRIVATE_KEYPATH_AWS=${SSH_PRIVATE_KEYPATH:=~/.ssh/${SSH_KEYNAME}.pem}
 IMAGE=${IMAGE:=ami-e1496384} # REPLACE with CentOS or RHEL image
 SUBNET=${SUBNET:=subnet-xxxxxxxx} # REPLACE with Subnet ID
 SECURITY_GROUP=${SECURITY_GROUP:=sg-xxxxxxxx} # REPLACE with Security Group ID
@@ -54,32 +54,23 @@ ${aws_prefix} ec2 create-tags \
     --resources $dirinstanceid \
     --tags Key=owner,Value=${OWNER_TAG} Key=Name,Value=greg-director
 
-# while state=$(${aws_prefix} ec2 describe-instances --region us-west-1 --instance-ids $dbinstanceid --output text --query 'Reservations[*].Instances[*].State.Name'); test "$state" = "pending"; do
-#   sleep 10; echo -n '.'
-# done; echo " $state"
-
-# ## Tag the DB instance
-# ${aws_prefix} ec2 create-tags \
-#     --region us-west-1 \
-#     --resources $dbinstanceid \
-#     --tags Key=owner,Value=gregoryg Key=Name,Value=greg-mysql
-
-echo 'Fixing up the .ssh/config file'
 info=$(${aws_prefix} ec2 describe-instances --instance-ids ${dirinstanceid} --query 'Reservations[*].Instances[*].{pubip:PublicIpAddress,privateip:PrivateIpAddress,privatedns:PrivateDnsName}' --output json)
 
-dirip=`echo ${info} | grep -P -o '"pubip"\s*:\s*"\K[^"]+'`
-# privip=`echo ${info} | grep -P -o '"privateip"\s*:\s*"\K[^"]+'`
-dirfqdn=`echo ${info} | grep -P -o '"privatedns"\s*:\s*"\K[^"]+'`
+dirip=`echo ${info} | perl -nle 'print "$1" if m{"pubip"\s*:\s*"([^"]+)}'`
+dirfqdn=`echo ${info} | perl -nle 'print "$1" if m{"privatedns"\s*:\s*"([^"]+)}'`
 
-sshcmd="ssh -tt -i ${SSH_PRIVATE_KEYPATH} ${SSH_USER}@${dirip} "
-# dirip=`echo $info | jq -r '.[0][0].pubip'`
-# privip=`echo $info | jq -r '.[0][0].privateip'`
-# dirfqdn=`echo $info | jq -r '.[0][0].privatedns'`
+sshcmd="ssh -tt -i ${SSH_PRIVATE_KEYPATH_AWS} ${SSH_USER}@${dirip} "
+
 ssh-keygen -q -R ${dirip}
 
-# # echo 'Fixing up the .ssh/config file'
-# sed -i.bak -e "/^ *Host aws-director/,/^ *Host /{s/^\( *Hostname *\)\(.*\)/\1$dirip/}" ~/.ssh/config
-# diff ~/.ssh/config ~/.ssh/config.bak
+echo 'Fixing up the .ssh/config file'
+# Create a skeleton config if there is none there already
+if [ -x $(dirname "$0")/create-ssh-config.sh ] ; then
+    $(dirname "$0")/create-ssh-config.sh
+fi
+
+sed -i.bak -E "/^ *Host aws-director */,/^ *Host / s/(Hostname) +(.*)/\1 ${dirip}/" ~/.ssh/config
+diff ~/.ssh/config ~/.ssh/config.bak
 
 echo 'Disabling selinux'
 ${sshcmd} -o StrictHostKeyChecking=no "sudo setenforce 0; sudo sed -i.bak 's/^\(SELINUX=\).*/\1disabled/' /etc/selinux/config"
@@ -96,7 +87,7 @@ if [ `type -P emacsclient` > /dev/null 2>&1 ] ; then
     emacsclient -n /ssh:${SSH_USER}@${dirip}:
 else
     echo "Start a proxy with"
-    echo "ssh -i ${SSH_PRIVATE_KEYPATH} ${SSH_USER}@${dirip} -D 8157 -A"
+    echo "ssh -i ${SSH_PRIVATE_KEYPATH_AWS} ${SSH_USER}@${dirip} -D 8157 -A"
 fi
 
 ${sshcmd} 'sudo yum -y install nc netcat'
