@@ -5,9 +5,9 @@
 
 # Edit the defaults below or use environment variables to override
 OWNER_TAG=${OWNER_TAG:=${USER}}  # example: jsmith
-SSH_USERNAME=${SSH_USERNAME:=${USER}} # example: gregj/centos/ec2-user
+SSH_USER=${SSH_USER:=${USER}} # examples: gregj/centos/ec2-user
+INSTANCE_NAME=${INSTANCE_NAME:=abc-director} # example: js-director
 AZ_RESOURCE_GROUP=${AZ_RESOURCE_GROUP:=${USER}-rg} # example: jsmith-rg
-AZ_INSTANCE_NAME=${AZ_INSTANCE_NAME:=abc-director} # example: js-director
 SSH_KEYNAME=${SSH_KEYNAME:=abc-azure.pub}
 SUBSCRIPTION_NAME=${SUBSCRIPTION_NAME:=Sales Engineering} # or Professional Services
 
@@ -19,9 +19,9 @@ fi
 echo """Using the following values
 Azure subscription: ${SUBSCRIPTION_NAME}
 Owner tag: ${OWNER_TAG}
-SSH User: ${SSH_USERNAME}
+SSH User: ${SSH_USER}
 Azure resource group: ${AZ_RESOURCE_GROUP} (must exist on your Azure axcount)
-Instance name: ${AZ_INSTANCE_NAME}
+Instance name: ${INSTANCE_NAME}
 SSH public key: ~/.ssh/${SSH_KEYNAME}
 """
 read -p  "Proceed? [Y/n]: " -n 1 -r
@@ -51,10 +51,10 @@ echo 'Starting provisioning of instance on Azure - please use default DNS for yo
 dirinfo=$(az vm create \
     --size STANDARD_DS13_V2 \
     --resource-group ${AZ_RESOURCE_GROUP} \
-    --name ${AZ_INSTANCE_NAME} \
+    --name ${INSTANCE_NAME} \
     --tags owner=${OWNER_TAG} \
     --image CentOS \
-    --admin-username ${SSH_USERNAME} \
+    --admin-username ${SSH_USER} \
     --ssh-key-value  "`cat ~/.ssh/${SSH_KEYNAME}`")
 
 if [ "$?" != 0 ] ; then
@@ -69,13 +69,13 @@ fi
 # fi
 
 # use jq if available, as it's more reliable parsing JSON
-if [ type -P jq > /dev/null 2>&1 ] ; then
+if [ `type -P jq` > /dev/null 2>&1 ] ; then
     dirip=`echo ${dirinfo} | jq -r '.publicIpAddress'`
 else
     dirip=`echo ${dirinfo} | grep -P -o  '"publicIpAddress"\s*:\s*"?\K[^,\}"]+'`
 fi
 
-sshcmd="ssh -tt -i ~/.ssh/${SSH_KEYNAME} ${SSH_USERNAME}@${dirip} "
+sshcmd="ssh -tt -i ~/.ssh/${SSH_KEYNAME} ${SSH_USER}@${dirip} "
 
 # echo 'Fixing up the .ssh/config file'
 # gsed -i.bak "/^ *Host azure-director */,/^ *Host /{s/^\( *Hostname *\)\(.*\)/\1$dirip/}" ~/.ssh/config
@@ -107,28 +107,11 @@ ${sshcmd} 'sudo bash ./director-scripts/azure-dns-scripts/bind-dns-setup.sh'
 ${sshcmd} 'sudo service named restart; sudo bash ./director-scripts/azure-dns-scripts/dns-test.sh'
 
 
-# echo Starting proxy
-# emacsclient -n '/ssh:${SSH_USERNAME}@azure-director:'
-# echo waiting for Director to become available
-# sleep 30
-# for i in 1 2 3 4 5 6 7 8 9 10
-# do
-#     ${sshcmd} 'nc `hostname` 7189 < /dev/null'
-#     ret=$?
-#     if [ ${ret} == 0 ] ; then
-#         # echo Opening Director web page
-#         # open "http://${dirhost}:7189/"
-#         break
-#     else
-#         echo -n .
-#         sleep 10
-#     fi
-# done
 
 # NOTE: Selinux must be disabled or set to permissive to allow DNS to be registered for cluster instances
 
 echo 'Start a proxy with '
-echo "ssh -i ~/.ssh/${SSH_KEYNAME} ${SSH_USERNAME}@${dirip} -D 8159 -A"
+echo "ssh -i ~/.ssh/${SSH_KEYNAME} ${SSH_USER}@${dirip} -D 8159 -A"
 echo "TRAMP URI: /ssh:azure-director:"
 echo "Cloudera Director URL: http://${dirshorthost}.cdh-cluster.internal:7189/"
 
