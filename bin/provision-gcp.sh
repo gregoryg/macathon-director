@@ -1,7 +1,12 @@
 #!/bin/bash
-# 1) Launch the Cloudera Director instance
-## Cloudera Director with local repo and web server
-# network='totally-bogus'
+# Edit the defaults below or use environment variables to override
+# Defaults assume us-central1-c zone
+# invocation example:
+# SSH_USER=jsmith \
+#         OWNER_TAG=janesmith \
+#         INSTANCE_NAME=js-director \
+#         SSH_PRIVATE_KEYPATH_GCP=~/.ssh/google_compute_engine \
+#         ./provision-gcp.sh 
 
 OWNER_TAG=${OWNER_TAG:=${USER}}  # example: jsmith
 SSH_USER="${SSH_USER:=centos}" # examples: jsmith/centos/ec2-user
