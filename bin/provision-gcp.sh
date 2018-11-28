@@ -15,7 +15,7 @@ GCLOUD_CONFIG=${GCLOUD_CONFIG:=default} # see: gcloud config list
 
 ### Do not edit below this line
 
-if [ ${IMAGE_FAMILY} -eq "rhel-7" ] ; then
+if [ ${IMAGE_FAMILY} == "rhel-7" ] ; then
     IMAGE_PROJECT=rhel-cloud
 fi
 
@@ -24,7 +24,7 @@ Gcloud CLI config: ${GCLOUD_CONFIG}
 Owner tag: ${OWNER_TAG}
 Zone: ${ZONE}
 Instance name: ${INSTANCE_NAME}
-Image family / project: ${IMAGE_FAMILY} / ${image_project}
+Image family / project: ${IMAGE_FAMILY} / ${IMAGE_PROJECT}
 Network: ${NETWORK}
 SSH User: ${SSH_USER}
 SSH private key: ${SSH_PRIVATE_KEYPATH_GCP}
