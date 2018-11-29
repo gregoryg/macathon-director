@@ -57,7 +57,7 @@ ip=$(ip -4 route get 1 | head -1 | sed 's,^.\+src \+\([\.0-9]\+\).*,\1,')
 serviceName=$(curl --user $CM_USERNAME:$CM_PASSWORD --request GET http://$DEPLOYMENT_HOST_PORT/api/v18/clusters/$CLUSTER_NAME/services  | jq -r '.items[] | select(.type == "CDSW") .name')
 
 # Use nip.io for wildcard DNS
-config=$(curl -H "Content-Type: application/json" --user $CM_USERNAME:$CM_PASSWORD --request PUT -d '{"items": [{"name": "cdsw.domain.config", "value":"cdsw.${ip}.nip.io"},{"name":"cdsw.master.ip.config","value":"${ip}"}]}' http://${DEPLOYMENT_HOST_PORT}/api/v18/clusters/unity/services/${serviceName}/config )
+config=$(curl -H "Content-Type: application/json" --user $CM_USERNAME:$CM_PASSWORD --request PUT -d '{"items": [{"name": "cdsw.domain.config", "value":"cdsw.${ip}.nip.io"},{"name":"cdsw.master.ip.config","value":"${ip}"}]}' http://${DEPLOYMENT_HOST_PORT}/api/v18/clusters/${CLUSTER_NAME}/services/${serviceName}/config )
 
 # Restart the service to apply changes
 curl --user $CM_USERNAME:$CM_PASSWORD -X POST http://$DEPLOYMENT_HOST_PORT/api/v18/clusters/${CLUSTER_NAME}/services/${serviceName}/commands/restart
