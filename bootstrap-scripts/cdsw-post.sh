@@ -53,16 +53,18 @@ systemctl restart rpc-statd
 
 
 ip=$(ip -4 route get 1 | head -1 | sed 's,^.\+src \+\([\.0-9]\+\).*,\1,')
-
-serviceName=$(curl --user $CM_USERNAME:$CM_PASSWORD --request GET http://$DEPLOYMENT_HOST_PORT/api/v18/clusters/$CLUSTER_NAME/services  | jq -r '.items[] | select(.type == "CDSW") .name')
-
 # Use nip.io for wildcard DNS
-config=$(curl -H "Content-Type: application/json" --user $CM_USERNAME:$CM_PASSWORD --request PUT -d '{"items": [{"name": "cdsw.domain.config", "value":"cdsw.${ip}.nip.io"},{"name":"cdsw.master.ip.config","value":"${ip}"}]}' http://${DEPLOYMENT_HOST_PORT}/api/v18/clusters/${CLUSTER_NAME}/services/${serviceName}/config )
+domain="cdsw.${ip}.nip.io"
+
+serviceName=$(curl -u $CM_USERNAME:$CM_PASSWORD -X GET http://$DEPLOYMENT_HOST_PORT/api/v18/clusters/$CLUSTER_NAME/services  | jq -r '.items[] | select(.type == "CDSW") .name')
+
+config=$(curl -H "Content-Type: application/json" -u $CM_USERNAME:$CM_PASSWORD -X PUT -d '{"items": [{"name": "cdsw.domain.config", "value":"'${domain}'"},{"name":"cdsw.master.ip.config","value":"'${ip}'"}]}' http://${DEPLOYMENT_HOST_PORT}/api/v18/clusters/${CLUSTER_NAME}/services/${serviceName}/config )
+
 
 # Restart the service to apply changes
-curl --user $CM_USERNAME:$CM_PASSWORD -X POST http://$DEPLOYMENT_HOST_PORT/api/v18/clusters/${CLUSTER_NAME}/services/${serviceName}/commands/restart
+curl -u $CM_USERNAME:$CM_PASSWORD -X POST http://$DEPLOYMENT_HOST_PORT/api/v18/clusters/${CLUSTER_NAME}/services/${serviceName}/commands/restart
 
 echo 'nameserver 8.8.8.8' | tee -a /etc/resolv.conf # add google DNS to assure xip.io will resolve
-echo "CDSW will run at http://${DOM}:80"
+echo "CDSW will run at http://${domain}:80"
 
 exit 0
