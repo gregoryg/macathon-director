@@ -108,22 +108,22 @@ else
     echo "ssh -i ${SSH_PRIVATE_KEYPATH_AWS} ${SSH_USER}@${dirip} -D 8157 -A"
 fi
 
-${sshcmd} 'sudo yum -y install nc netcat'
-echo waiting for Director to become available
-for i in 1 2 3 4 5 6 7 8 9 10
-do
-    ${sshcmd} "nc localhost 7189 < /dev/null"
-    ret=$?
-    if [ ${ret} == 0 ] ; then
-        # echo Opening Director web page
-        # open "http://${dirfqdn}:7189/"
-        break
-    else
-        echo -n .
-        sleep 10
-    fi
-done
-echo
+# ${sshcmd} 'sudo yum -y install nc netcat'
+# echo waiting for Director to become available
+# for i in 1 2 3 4 5 6 7 8 9 10
+# do
+#     ${sshcmd} "nc localhost 7189 < /dev/null"
+#     ret=$?
+#     if [ ${ret} == 0 ] ; then
+#         # echo Opening Director web page
+#         # open "http://${dirfqdn}:7189/"
+#         break
+#     else
+#         echo -n .
+#         sleep 10
+#     fi
+# done
+# echo
 
 echo "Cloudera Altus Director URL: http://${dirfqdn}:7189/"
 echo "TRAMP URI: //ssh:${SSH_USER}@aws-director:"
