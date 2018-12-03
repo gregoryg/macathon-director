@@ -1,5 +1,4 @@
-#!/bin/bash
-
+#!/bin/bash -x
 # Edit the defaults below or use environment variables to override
 # Defaults assume us-east-2 region (Ohio)
 # invocation example:
@@ -59,7 +58,8 @@ dirinstanceid=$(${aws_prefix} ec2 run-instances \
     --output text \
     --query 'Instances[*].InstanceId')
 if [ "$?" != 0 ] ; then
-   exit 1
+    echo Error creating the instance
+    exit 1
 fi
 
 echo 'Waiting to tag instance(s)'
@@ -70,7 +70,7 @@ done; echo " $state"
 ## Tag the Director instance
 ${aws_prefix} ec2 create-tags \
     --resources $dirinstanceid \
-    --tags Key=owner,Value=${OWNER_TAG} Key=Name,Value=greg-director
+    --tags Key=owner,Value=${OWNER_TAG} Key=Name,Value=${INSTANCE_NAME}
 
 info=$(${aws_prefix} ec2 describe-instances --instance-ids ${dirinstanceid} --query 'Reservations[*].Instances[*].{pubip:PublicIpAddress,privateip:PrivateIpAddress,privatedns:PrivateDnsName}' --output json)
 
@@ -90,13 +90,27 @@ fi
 sed -i.bak -E "/^ *Host aws-director */,/^ *Host / s/(Hostname) +(.*)/\1 ${dirip}/" ~/.ssh/config
 diff ~/.ssh/config.bak ~/.ssh/config
 
+echo "Waiting for SSH server to become available"
+for i in `seq 1 10`; do
+    ${sshcmd} -o ConnectTimeout=3 -o StrictHostKeyChecking=no -q exit
+    if [ "$?" -eq 0 ] ; then
+        break
+    fi
+    echo -n '.'
+    sleep 2
+done
+echo
+
 echo 'Disabling selinux'
 ${sshcmd} -o StrictHostKeyChecking=no "sudo setenforce 0; sudo sed -i.bak 's/^\(SELINUX=\).*/\1disabled/' /etc/selinux/config"
+if [ "$?" != 0 ] ; then
+    echo "Was not able to reach instance ${INSTANCE_NAME} via SSH - exiting"
+    exit 1
+fi
 
 echo 'Setting up MariaDB/MySQL, Altus Director and Bind'
 ${sshcmd} 'sudo yum -y install wget git'
 ${sshcmd} "wget 'https://raw.githubusercontent.com/gregoryg/macathon-director/master/bin/configure-director-instance.sh'"
-
 ${sshcmd} 'bash ./configure-director-instance.sh'
 
 
@@ -107,23 +121,6 @@ else
     echo "Start a proxy with"
     echo "ssh -i ${SSH_PRIVATE_KEYPATH_AWS} ${SSH_USER}@${dirip} -D 8157 -A"
 fi
-
-# ${sshcmd} 'sudo yum -y install nc netcat'
-# echo waiting for Director to become available
-# for i in 1 2 3 4 5 6 7 8 9 10
-# do
-#     ${sshcmd} "nc localhost 7189 < /dev/null"
-#     ret=$?
-#     if [ ${ret} == 0 ] ; then
-#         # echo Opening Director web page
-#         # open "http://${dirfqdn}:7189/"
-#         break
-#     else
-#         echo -n .
-#         sleep 10
-#     fi
-# done
-# echo
 
 echo "Cloudera Altus Director URL: http://${dirfqdn}:7189/"
 echo "TRAMP URI: //ssh:${SSH_USER}@aws-director:"
