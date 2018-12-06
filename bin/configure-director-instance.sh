@@ -205,6 +205,6 @@ cd ~
 
 git clone 'https://github.com/gregoryg/macathon-director.git'
 
-echo export PS1=\'\\u@azure-director \\W$ \' >> ~/.bashrc
+echo export PS1=\'\\u@director \\W$ \' >> ~/.bashrc
 # echo "All done!  Director UI will be running at http://`hostname -s`.cdh-cluster.internal:7189"
 # echo 'If on Azure, remember to change DNS with director-scripts/azure-dns-scripts/bind-dns-setup.sh'
